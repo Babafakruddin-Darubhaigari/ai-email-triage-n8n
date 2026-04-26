@@ -1,0 +1,172 @@
+{
+  "name": "Email Digest System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            },
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -592,
+        -32
+      ],
+      "id": "a1149a10-d112-48d7-b061-d42c2f0d1d15",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "receivedAfter": "={{ new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -384,
+        -32
+      ],
+      "id": "ee401b0a-7507-48ea-bb61-ccaef8f7e221",
+      "name": "Get many messages",
+      "webhookId": "bc10c6c4-0f67-471c-a2da-0f8b5767c3e8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wt7RlMAEfVXiNaux",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const emails = items;\n\nlet urgent = [];\nlet follow = [];\nlet fyi = [];\n\nemails.forEach(item => {\n  const labels = item.json.labels || [];\n\n  const subject = item.json.Subject || item.json.subject || \"No Subject\";\n\n  // extract label names\n  const labelNames = labels.map(l => l.name);\n\n  if (labelNames.includes(\"URGENT\")) {\n    urgent.push(subject);\n  } \n  else if (labelNames.includes(\"FOLLOW_UP\")) {\n    follow.push(subject);\n  } \n  else if (labelNames.includes(\"FYI\")) {\n    fyi.push(subject);\n  }\n});\n\nreturn [{\n  json: {\n    urgent,\n    follow,\n    fyi\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "179b8d57-a2b5-428b-86ca-b52d044b0595",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93380524-9a9b-4dda-adf1-3ef45bc901de",
+              "name": "digest",
+              "value": "=📊 Daily Email Digest\n\n🔴 URGENT ({{ $json.urgent.length }})\n{{ $json.urgent.map(e => \"- \" + e).join('\\n') }}\n\n🟡 FOLLOW-UP ({{ $json.follow.length }})\n{{ $json.follow.map(e => \"- \" + e).join('\\n') }}\n\n🔵 FYI ({{ $json.fyi.length }})\n{{ $json.fyi.map(e => \"- \" + e).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -32
+      ],
+      "id": "385906d3-d8d3-4c37-b34b-840dae361124",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "babadarubhaigari@gmail.com",
+        "subject": "Daily Email Digest",
+        "emailType": "text",
+        "message": "={{ $json.digest }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "9cf81115-1e02-4563-a5c1-7fbc5eeb5766",
+      "name": "Send a message",
+      "webhookId": "d7715864-0a00-44b3-8d96-b07ee9432f01",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wt7RlMAEfVXiNaux",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "b373aa15-e47b-4a98-b49a-10c9d350e250",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "23accc9172c08b1310ee689b9de10024f56f28fd185a02baf32127119c082540"
+  },
+  "id": "G6XZrFIZnQPzdzLL",
+  "tags": []
+}
