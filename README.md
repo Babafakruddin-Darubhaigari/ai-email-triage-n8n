@@ -42,8 +42,8 @@ It classifies incoming emails into categories and generates a daily digest to im
 
 ## 📸 Screenshots
 
-(Add your workflow and email screenshots here)
-
+![alt text](<Screenshot 2026-04-26 131301.png>)
+![alt text](<Screenshot 2026-04-26 131347.png>)
 ---
 
 ## 📂 Setup Instructions
